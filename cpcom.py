@@ -1,0 +1,47 @@
+import WPANManagement
+import zigbee
+import time
+import WPAN
+import urllib
+from time import sleep
+from select import *
+
+node_list=zigbee.getnodelist()
+DPost = {}
+DPost['report[device_code]'] = 'aa452_73rus'
+DPost['report[latitude]'] = 56.3
+DPost['report[longitude]'] = 33
+
+sd = WPANManagement.get_serial_endpoint_socket()
+DESTINATION=("00:13:a2:00:40:3a:ed:6e!", 0xe8, 0xc105, 0x11)
+sd.sendto("0", 0, DESTINATION)
+buf2,addr2 = sd.recvfrom(72)
+try:
+	print "%s"% (buf2)
+	DPost['report[ADuC]'] = buf2
+except Exception, e:
+	print "ERROR:%s"% (e)
+
+for node in node_list:
+	SampleP = WPANManagement.get_voltage(node.addr_extended)	
+	if node.device_type == 131080:
+		buf1 = WPANManagement.get_sensor_data(node.addr_extended)
+		SampleP.update(buf1)
+		buf1.clear()
+	elif node.device_type <> 196610:
+		SampleD = WPAN.ddo_get_param(node.addr_extended,'IS')
+		buf1 = WPANManagement.parse_is(SampleD)
+		SampleP.update(buf1)
+		buf1.clear()
+	for key, val in SampleP.items():
+  		SampleP['report[%s]' % (key+' '+node.label)] = val
+ 		del SampleP[key]
+	DPost.update(SampleP)
+	SampleP.clear()
+
+print "%24s" %(DPost.items())
+enc_data = urllib.urlencode(DPost.items())
+f = urllib.urlopen("http://192.168.0.101:3000/reports", enc_data)
+
+
+
