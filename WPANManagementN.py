@@ -7,7 +7,7 @@ def get_voltage(addr_extended):
 	sample = WPAN.ddo_get_param(addr_extended, '%V')              
 	result = ord(sample[0]) * 256 + ord(sample[1])               
 	voltage_level = adc_convert(result, "")
-	out['voltage'] = voltage_level
+	out['U_mV'] = voltage_level
 	return out	
 
 def adc_convert(adc_data, sensor):  
@@ -40,11 +40,11 @@ def get_sensor_data(addr_extended):
 	out['Light'] = round(adc_convert(buf1, "Light"))                                   
     
 	buf2 = parse_is(buf)["AI2"]
-	out['Temperature'] = round(adc_convert(buf2, "Temp")[0])                                  
+	out['Temp_C'] = round(adc_convert(buf2, "Temp")[0])                                  
     
 	buf3 = parse_is(buf)["AI3"]
    
-	out['Humidity'] = round(adc_convert(buf3, "Humidity"))  
+	out['Humid'] = round(adc_convert(buf3, "Humidity"))  
 	return out   
 
 def parse_is(data):
